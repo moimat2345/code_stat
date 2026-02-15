@@ -10,12 +10,12 @@ $ code-stats .
   Language breakdown (by lines):
 
  Language    Lines     %      Files  Largest file
- C           12,340  62.1%     48   src/parser.c       (  812)
- Python       3,210  16.2%     12   tools/sync.py      (  540)
- Rust         2,100  10.6%      8   src/main.rs        (  420)
- HTML           800   4.0%      3   web/index.html     (  420)
- Shell          310   1.6%      5   scripts/deploy.sh  (  120)
- Other        1,100   5.5%     14   data/config.lock   (  600)
+ C           12,340  62.1%     48   src/parser.c      (812)
+ Python       3,210  16.2%     12   tools/sync.py     (540)
+ Rust         2,100  10.6%      8   src/main.rs       (420)
+ HTML           800   4.0%      3   web/index.html    (420)
+ Shell          310   1.6%      5   scripts/deploy.sh (120)
+ Other        1,100   5.5%     14   data/config.lock  (600)
 
   Largest file: src/parser.c — 812 lines
   Files: 90 analyzed, 3 skipped (2 binary)
