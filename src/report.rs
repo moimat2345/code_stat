@@ -25,11 +25,29 @@ pub fn render(report: &Report) {
         Cell::new("Largest file").add_attribute(Attribute::Bold),
     ]);
 
+    let max_path_width = report
+        .languages
+        .iter()
+        .map(|l| l.largest_file.display().to_string().len())
+        .max()
+        .unwrap_or(0);
+
+    let max_lines_width = report
+        .languages
+        .iter()
+        .map(|l| format_number(l.largest_file_lines).len())
+        .max()
+        .unwrap_or(0);
+
     for lang in &report.languages {
+        let path_str = lang.largest_file.display().to_string();
+        let num = format_number(lang.largest_file_lines);
         let file_display = format!(
-            "{} ({})",
-            lang.largest_file.display(),
-            format_number(lang.largest_file_lines),
+            "{:<pw$} ({:>nw$})",
+            path_str,
+            num,
+            pw = max_path_width,
+            nw = max_lines_width,
         );
 
         table.add_row(vec![
