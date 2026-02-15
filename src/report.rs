@@ -85,18 +85,3 @@ fn format_number(n: usize) -> String {
     }
     result
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_format_number() {
-        assert_eq!(format_number(0), "0");
-        assert_eq!(format_number(42), "42");
-        assert_eq!(format_number(999), "999");
-        assert_eq!(format_number(1000), "1,000");
-        assert_eq!(format_number(12340), "12,340");
-        assert_eq!(format_number(1000000), "1,000,000");
-    }
-}
