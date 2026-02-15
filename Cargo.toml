@@ -1,0 +1,15 @@
+[package]
+name = "code-stats"
+version = "0.1.0"
+edition = "2021"
+description = "Analyze source code repositories and display language statistics"
+license = "MIT"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+ignore = "0.4"
+comfy-table = ">=7.1, <7.2"
+anyhow = "1"
+
+[dev-dependencies]
+tempfile = "3"
