@@ -1,11 +1,29 @@
+<div align="center">
+
 # code-stats
 
-A fast, local CLI tool that analyzes source code repositories and displays language statistics. Think of it as a lightweight [GitHub Linguist](https://github.com/github-linguist/linguist) that runs entirely offline.
+**Know your codebase at a glance — entirely offline.**
 
-## Example output
+A fast CLI tool that recursively scans a directory, detects programming languages,
+and displays a clean breakdown of file counts, line counts, and largest files. Like GitHub Linguist, but local and instant.
+
+![Rust](https://img.shields.io/badge/Rust-stable-000000?logo=rust&logoColor=white)
+![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Linux%20%7C%20Windows-5C6BC0)
+![License](https://img.shields.io/badge/License-MIT-green)
+![Dependencies](https://img.shields.io/badge/Dependencies-4-7E57C2)
+
+<a href="README.fr.md"><img src="https://img.shields.io/badge/%F0%9F%87%AB%F0%9F%87%B7_Lire_en_fran%C3%A7ais-blue?style=for-the-badge" alt="Lire en francais"></a>
+
+</div>
+
+---
+
+## What It Does
+
+code-stats scans a source code repository and produces a **language breakdown by lines**, showing for each detected language the number of files, total lines, percentage, and the largest file.
 
 ```
-$ code-stats .
+$ code-stats ~/projects/my-app
 
   Language breakdown (by lines):
 
@@ -22,10 +40,21 @@ $ code-stats .
   Total lines: 19,860
 ```
 
-## Installation
+### Key features
+
+- **22 languages** detected out of the box (C, C++, Rust, Python, JS, TS, Go, Java, and more)
+- **Respects `.gitignore`** automatically — skips hidden files, `target/`, `node_modules/`, etc.
+- **Binary-safe** — detects and skips binary files using Git's own null-byte heuristic
+- **Handles non-UTF-8** — line counting works at the byte level, no encoding issues
+- **Aligned output** — file paths and line counts are padded for clean readability
+
+---
+
+## Quick Start
 
 ```sh
 cargo install --path .
+code-stats .
 ```
 
 To update, re-run the same command. To uninstall:
@@ -34,15 +63,17 @@ To update, re-run the same command. To uninstall:
 cargo uninstall code-stats
 ```
 
+---
+
 ## Usage
 
 ```
 code-stats [PATH]
 ```
 
-- `PATH` defaults to the current directory (`.`)
-- Respects `.gitignore` rules automatically
-- Skips hidden files and common build directories (`.git`, `target`, `node_modules`)
+| Argument | Default | Description |
+|:---------|:--------|:------------|
+| `PATH` | `.` | Directory to analyze |
 
 ```sh
 # Analyze current directory
@@ -52,10 +83,38 @@ code-stats
 code-stats ~/projects/my-app
 ```
 
-## Supported languages
+---
+
+## How It Works
+
+```
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│   Scanner    │────▶│  Detection   │────▶│   Analyzer   │────▶│    Stats     │────▶│   Report     │
+│  (ignore)    │     │  (extension  │     │  (binary     │     │  (aggregate  │     │  (comfy-     │
+│  walk dirs   │     │   + filename)│     │   + lines)   │     │   + sort)    │     │   table)     │
+└──────────────┘     └──────────────┘     └──────────────┘     └──────────────┘     └──────────────┘
+```
+
+| Stage | Module | What it does |
+|:------|:-------|:-------------|
+| **Scan** | `scanner.rs` | Walks the directory tree using the [`ignore`](https://crates.io/crates/ignore) crate (same engine as ripgrep) |
+| **Detect** | `detection.rs` | Maps file extensions and special filenames (Makefile, Dockerfile) to languages |
+| **Analyze** | `analyzer.rs` | Checks for binary files (null-byte in first 8 KB), counts lines at byte level |
+| **Aggregate** | `stats.rs` | Groups by language, computes percentages, finds largest files |
+| **Render** | `report.rs` | Formats an aligned table with comfy-table |
+
+### Design principles
+
+- **No `unwrap()` in production code** — all errors handled with `anyhow`
+- **I/O separated from logic** — `analyzer.rs` does file I/O, `stats.rs` is pure computation
+- **`lib.rs` exposes the full pipeline** — usable as a library, not just a CLI
+
+---
+
+## Supported Languages
 
 | Language | Extensions |
-|----------|-----------|
+|:---------|:-----------|
 | C | `.c` |
 | C Header | `.h` |
 | C++ | `.cpp`, `.cc`, `.cxx`, `.c++`, `.hpp`, `.hxx`, `.hh` |
@@ -81,14 +140,49 @@ code-stats ~/projects/my-app
 
 Files with unrecognized extensions are grouped under **Other**.
 
-## How it works
+---
 
-1. Walks the directory tree using the [`ignore`](https://crates.io/crates/ignore) crate (same engine as ripgrep), respecting `.gitignore`
-2. Detects languages by file extension and special filenames
-3. Identifies binary files using a null-byte heuristic on the first 8 KB (same method as Git)
-4. Counts lines at the byte level — handles non-UTF-8 files and CRLF line endings correctly
-5. Aggregates statistics and renders a formatted table
+## Tech Stack
+
+| | Crate | Usage |
+|:-|:------|:------|
+| ![Clap](https://img.shields.io/badge/clap-4-5C6BC0?logoColor=white) | clap (derive) | CLI argument parsing + `--help` generation |
+| ![Ignore](https://img.shields.io/badge/ignore-0.4-7E57C2?logoColor=white) | ignore | Directory traversal respecting `.gitignore` (by BurntSushi) |
+| ![ComfyTable](https://img.shields.io/badge/comfy--table-7-9575CD?logoColor=white) | comfy-table | Terminal table rendering with alignment |
+| ![Anyhow](https://img.shields.io/badge/anyhow-1-7986CB?logoColor=white) | anyhow | Error handling with context chaining |
+
+**4 dependencies.** No async runtime, no serde, no proc-macro beyond clap derive.
+
+---
+
+## Project Structure
+
+```
+code-stats/
+├── src/
+│   ├── main.rs        # CLI entry point (clap)
+│   ├── lib.rs         # Module declarations
+│   ├── models.rs      # Shared types: Language, FileInfo, Report
+│   ├── scanner.rs     # Directory traversal (ignore crate)
+│   ├── detection.rs   # Language detection by extension + filename
+│   ├── analyzer.rs    # Binary detection + line counting
+│   ├── stats.rs       # Aggregation (pure, no I/O)
+│   └── report.rs      # Terminal rendering (comfy-table)
+├── Cargo.toml
+├── LICENSE            # MIT
+└── .github/
+    └── workflows/
+        └── ci.yml     # fmt + clippy + build
+```
+
+---
 
 ## License
 
 MIT
+
+---
+
+<p align="center">
+  <sub>Built by Mateon — Powered by Rust</sub>
+</p>
